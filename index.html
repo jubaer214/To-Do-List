@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full-Screen To-Do App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+        body {
+            font-family: 'Poppins', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .dark {
+            background-color: #2b3446;
+            color: #e2e8f0;
+        }
+        .task-item {
+            transform: scale(1);
+            transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
+        }
+        .task-item.fade-out {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        .task-title.completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+        .priority-low { background-color: #d1fae5; color: #065f46; }
+        .priority-medium { background-color: #fef3c7; color: #92400e; }
+        .priority-high { background-color: #fee2e2; color: #991b1b; }
+        .dark .priority-low { background-color: #064e3b; color: #a7f3d0; }
+        .dark .priority-medium { background-color: #92400e; color: #fef3c7; }
+        .dark .priority-high { background-color: #7f1d1d; color: #fecaca; }
+        .no-tasks-message {
+            display: none;
+        }
+        .no-tasks-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300 flex flex-col min-h-screen">
+
+    <header class="bg-gray-800 text-white p-4 flex justify-between items-center shadow-md">
+        <h1 class="text-2xl font-bold">To-Do App</h1>
+        <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-700 transition-colors">
+            <svg id="sun-icon" class="w-6 h-6 hidden text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707"/>
+            </svg>
+            <svg id="moon-icon" class="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+        </button>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        
+        <aside class="w-64 bg-gray-200 dark:bg-gray-800 p-4 shadow-lg overflow-y-auto hidden md:block">
+            <h2 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">Active Tasks</h2>
+            <ul id="sidebar-list" class="space-y-2">
+                </ul>
+            <p id="no-active-tasks-message" class="text-sm text-gray-500 dark:text-gray-400 mt-4 hidden">
+                You're all caught up!
+            </p>
+        </aside>
+
+        <main class="flex-1 p-6 overflow-y-auto">
+            <div class="w-full max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">Manage Your Tasks</h2>
+
+                <form id="task-form" class="flex flex-col sm:flex-row gap-4 mb-6">
+                    <input type="text" id="task-input" placeholder="Add a new task..." required class="flex-grow p-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white dark:bg-gray-800 text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400">
+                    <input type="date" id="date-input" class="p-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white dark:bg-gray-800 text-gray-800 dark:text-white">
+                    <select id="priority-select" class="p-3 rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all bg-white dark:bg-gray-800 text-gray-800 dark:text-white">
+                        <option value="none">No Priority</option>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                    <button type="submit" class="p-3 rounded-lg bg-blue-500 text-white font-semibold hover:bg-blue-600 transition-colors">Add</button>
+                </form>
+                
+                <div class="flex flex-col sm:flex-row gap-4 mb-6">
+                    <div class="relative flex-grow">
+                        <input type="text" id="search-input" placeholder="Search tasks..." class="w-full p-3 pl-10 rounded-lg border-2 border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all bg-white dark:bg-gray-800 text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400">
+                        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <div class="flex justify-between sm:justify-end gap-2 sm:gap-4">
+                        <button data-filter="all" class="filter-btn p-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">All</button>
+                        <button data-filter="active" class="filter-btn p-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors active">Active</button>
+                        <button data-filter="completed" class="filter-btn p-3 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">Completed</button>
+                    </div>
+                </div>
+
+                <p id="no-tasks-message" class="text-center text-gray-500 dark:text-gray-400 text-lg my-8 no-tasks-message">
+                    You're all caught up! No tasks here. 🎉
+                </p>
+
+                <ul id="task-list" class="space-y-4">
+                    </ul>
+            </div>
+        </main>
+    </div>
+
+    <footer class="bg-gray-800 text-white p-4 text-center text-sm shadow-inner">
+        &copy; 2025 To-Do App. All rights reserved.
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const taskForm = document.getElementById('task-form');
+            const taskInput = document.getElementById('task-input');
+            const dateInput = document.getElementById('date-input');
+            const prioritySelect = document.getElementById('priority-select');
+            const taskList = document.getElementById('task-list');
+            const sidebarList = document.getElementById('sidebar-list');
+            const searchInput = document.getElementById('search-input');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const themeToggle = document.getElementById('theme-toggle');
+            const body = document.body;
+            const noTasksMessage = document.getElementById('no-tasks-message');
+            const noActiveTasksMessage = document.getElementById('no-active-tasks-message');
+            
+            let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            let currentFilter = 'all';
+
+            // Initial render
+            renderAll();
+            setInitialTheme();
+            updateFilterButtons();
+
+            // Event Listeners
+            taskForm.addEventListener('submit', addTask);
+            taskList.addEventListener('click', handleTaskActions);
+            searchInput.addEventListener('input', renderTasks);
+            filterButtons.forEach(button => button.addEventListener('click', handleFilterChange));
+            themeToggle.addEventListener('click', toggleTheme);
+
+            /**
+             * Adds a new task to the list.
+             * @param {Event} e - The form submission event.
+             */
+            function addTask(e) {
+                e.preventDefault();
+
+                const title = taskInput.value.trim();
+                if (!title) return;
+
+                const dueDate = dateInput.value;
+                const priority = prioritySelect.value;
+
+                const newTask = {
+                    id: Date.now(),
+                    title,
+                    dueDate,
+                    priority,
+                    completed: false
+                };
+
+                tasks.push(newTask);
+                saveTasks();
+                taskForm.reset();
+                renderAll();
+            }
+
+            /**
+             * Handles click events for task items (delete and complete).
+             * @param {Event} e - The click event.
+             */
+            function handleTaskActions(e) {
+                const target = e.target;
+                const taskItem = target.closest('.task-item');
+                if (!taskItem) return;
+
+                const taskId = parseInt(taskItem.dataset.id);
+
+                if (target.closest('.delete-btn')) {
+                    // Smoothly fade out the task item before deleting
+                    taskItem.classList.add('fade-out');
+                    taskItem.addEventListener('transitionend', () => {
+                        tasks = tasks.filter(task => task.id !== taskId);
+                        saveTasks();
+                        renderAll();
+                    });
+                } else if (target.closest('.complete-btn')) {
+                    tasks = tasks.map(task =>
+                        task.id === taskId ? { ...task, completed: !task.completed } : task
+                    );
+                    saveTasks();
+                    renderAll();
+                }
+            }
+
+            /**
+             * Renders both the main task list and the sidebar list.
+             */
+            function renderAll() {
+                renderTasks();
+                renderSidebar();
+            }
+
+            /**
+             * Renders the tasks based on the current filter and search query.
+             */
+            function renderTasks() {
+                taskList.innerHTML = '';
+                const searchTerm = searchInput.value.toLowerCase();
+
+                const filteredTasks = tasks.filter(task => {
+                    const matchesSearch = task.title.toLowerCase().includes(searchTerm);
+                    const matchesFilter =
+                        currentFilter === 'all' ||
+                        (currentFilter === 'active' && !task.completed) ||
+                        (currentFilter === 'completed' && task.completed);
+                    return matchesSearch && matchesFilter;
+                });
+
+                if (filteredTasks.length === 0) {
+                    noTasksMessage.classList.add('show');
+                } else {
+                    noTasksMessage.classList.remove('show');
+                }
+
+                filteredTasks.forEach(task => {
+                    const taskItem = createTaskElement(task);
+                    taskList.appendChild(taskItem);
+                });
+            }
+
+            /**
+             * Renders the sidebar with only active tasks.
+             */
+            function renderSidebar() {
+                sidebarList.innerHTML = '';
+                const activeTasks = tasks.filter(task => !task.completed);
+
+                if (activeTasks.length === 0) {
+                    noActiveTasksMessage.classList.remove('hidden');
+                } else {
+                    noActiveTasksMessage.classList.add('hidden');
+                }
+
+                activeTasks.forEach(task => {
+                    const sidebarItem = document.createElement('li');
+                    sidebarItem.classList.add('p-2', 'rounded-md', 'bg-white', 'dark:bg-gray-700', 'shadow-sm');
+                    sidebarItem.innerHTML = `
+                        <p class="font-medium text-gray-800 dark:text-gray-200">${task.title}</p>
+                        ${task.dueDate ? `<span class="text-xs text-gray-500 dark:text-gray-400">${task.dueDate}</span>` : ''}
+                    `;
+                    sidebarList.appendChild(sidebarItem);
+                });
+            }
+
+            /**
+             * Creates a single task list item element.
+             * @param {Object} task - The task object.
+             * @returns {HTMLElement} The created list item element.
+             */
+            function createTaskElement(task) {
+                const taskItem = document.createElement('li');
+                taskItem.dataset.id = task.id;
+                taskItem.classList.add(
+                    'task-item', 'p-4', 'bg-white', 'dark:bg-gray-800', 'rounded-xl',
+                    'shadow-md', 'flex', 'flex-col', 'sm:flex-row', 'items-start',
+                    'sm:items-center', 'justify-between', 'gap-4', 'hover:shadow-lg',
+                    'transition-all', 'duration-300'
+                );
+
+                const priorityClasses = {
+                    'low': 'priority-low',
+                    'medium': 'priority-medium',
+                    'high': 'priority-high',
+                    'none': 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
+                };
+                const priorityText = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
+
+                const taskContent = `
+                    <div class="flex items-center flex-grow">
+                        <input type="checkbox" class="complete-btn h-5 w-5 text-blue-600 rounded focus:ring-blue-500 mr-4 cursor-pointer" ${task.completed ? 'checked' : ''}>
+                        <div class="flex flex-col">
+                            <span class="task-title text-lg font-semibold transition-all ${task.completed ? 'completed' : ''}">${task.title}</span>
+                            <div class="flex items-center mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                ${task.dueDate ? `
+                                    <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <span>${task.dueDate}</span>
+                                ` : ''}
+                                <span class="ml-2 px-2 py-1 rounded-full text-xs font-medium ${priorityClasses[task.priority]}">
+                                    ${priorityText}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="delete-btn text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1H9a1 1 0 00-1 1v3m3 0h3" />
+                        </svg>
+                    </button>
+                `;
+
+                taskItem.innerHTML = taskContent;
+                return taskItem;
+            }
+
+            /**
+             * Handles filter button clicks.
+             * @param {Event} e - The click event.
+             */
+            function handleFilterChange(e) {
+                currentFilter = e.target.dataset.filter;
+                updateFilterButtons();
+                renderTasks();
+            }
+
+            /**
+             * Updates the visual state of the filter buttons.
+             */
+            function updateFilterButtons() {
+                filterButtons.forEach(btn => {
+                    if (btn.dataset.filter === currentFilter) {
+                        btn.classList.add('bg-blue-500', 'text-white');
+                        btn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-200');
+                    } else {
+                        btn.classList.remove('bg-blue-500', 'text-white');
+                        btn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-200');
+                    }
+                });
+            }
+
+            /**
+             * Saves the tasks array to localStorage.
+             */
+            function saveTasks() {
+                localStorage.setItem('tasks', JSON.stringify(tasks));
+            }
+
+            /**
+             * Toggles between light and dark mode.
+             */
+            function toggleTheme() {
+                body.classList.toggle('dark');
+                const isDark = body.classList.contains('dark');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                updateThemeIcons(isDark);
+            }
+
+            /**
+             * Sets the initial theme based on localStorage or system preference.
+             */
+            function setInitialTheme() {
+                const savedTheme = localStorage.getItem('theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const isDark = savedTheme === 'dark' || (!savedTheme && prefersDark);
+                
+                if (isDark) {
+                    body.classList.add('dark');
+                }
+                updateThemeIcons(isDark);
+            }
+
+            /**
+             * Updates the visibility of the sun/moon icons.
+             * @param {boolean} isDark - True if dark mode is active.
+             */
+            function updateThemeIcons(isDark) {
+                const sunIcon = document.getElementById('sun-icon');
+                const moonIcon = document.getElementById('moon-icon');
+                if (isDark) {
+                    moonIcon.classList.add('hidden');
+                    sunIcon.classList.remove('hidden');
+                } else {
+                    sunIcon.classList.add('hidden');
+                    moonIcon.classList.remove('hidden');
+                }
+            }
+        });
+    </script>
+</body>
+</html>   
+
